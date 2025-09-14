@@ -1,0 +1,8 @@
+torch>=2.1
+h5py==3.10.*
+matplotlib
+pillow
+gymnasium==0.29
+stable-baselines3==2.3.0
+sb3-contrib==2.3.0
+scipy
