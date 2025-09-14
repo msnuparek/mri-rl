@@ -1,0 +1,47 @@
+{
+  "device": "cuda",
+  "train_list": "data/splits/train.txt",
+  "val_list": "data/splits/val.txt",
+
+  "budget": 144,
+  "timesteps": 100000,
+  "recon": "checkpoints/recon_largeunet_ssiml1.pth",
+  "rl": "checkpoints/ppo_maskable.zip",
+
+  "acs": 16,
+  "start_with_acs": 1,
+
+  "epochs": 50,
+  "batch_size": 16,
+  "lr": 0.001,
+  "accel": 2,
+  "loss": "ssim_l1",
+  "alpha": 0.85,
+  "save": "checkpoints/recon_largeunet_ssiml1_3R.pth",
+
+  "index": 20,
+  "out": "outputs/recon_vis.png",
+  "out_dir": "outputs/scan_rl",
+
+  "arch": "unet_large",
+  "base": 64,
+  "use_se": 1,
+  "p_drop": 0.0,
+  "stages": 3,
+  "tie_weights": 0,
+
+  "disp": "joint",
+  "pctl": 99.5,
+
+  "masked": 1,
+  "mask_type": "random",
+  "seed": 0,
+  "limit": 10,
+
+  "out_gif": "outputs/rl_episode.gif",
+  "out_grid": "outputs/rl_episode_grid.png",
+  "fps": 2,
+
+  "train_root": "D:/DP/data/knee_singlecoil_test",
+  "val_root": "D:/DP/data/knee_singlecoil_test"
+}
