@@ -6,7 +6,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
 
 from rl.env_ssim import KspaceEnv
 from rl.reconstructor import build_reconstructor, ReconWrapper
-from rl.fastmri_loader import SingleCoilKneeDataset
+from rl.fastmri_loader import DicomSingleCoilDataset
 from stable_baselines3.common.utils import get_linear_fn
 from cli_args import parse_train_rl_args
 
@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    train_ds = SingleCoilKneeDataset(args.train_list)
+    train_ds = DicomSingleCoilDataset(args.train_list)
 
     # Reconstructor (frozen)
     recon_core = build_reconstructor("unet_large", base=64, use_se=True, p_drop=0.0).to(device)
