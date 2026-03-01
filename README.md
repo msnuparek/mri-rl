@@ -1,4 +1,3 @@
-# mri-rl
 # MRI Reconstruction with Reinforcement Learning
 
 Active k-space column selection for accelerated MRI using a **MaskablePPO** agent.
