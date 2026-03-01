@@ -59,14 +59,12 @@ mri-rl/
 ├── checkpoints/             # saved .pth and .zip checkpoints
 ├── outputs/                 # generated GIFs, PNGs, CSVs
 │
-├── train_recon_dicom.py     # Step 1 – train reconstructor
+├── train_recon_ssim.py      # Step 1 – train reconstructor
 ├── train_rl.py              # Step 2 – train RL agent
 ├── visualize_rl.py          # Step 3 – visualize RL episode
 ├── visualize_compare.py     # Step 4 – RL vs baseline comparison
-├── eval_rl_recon.py         # Quantitative evaluation + differential analysis
 ├── make_scan_rl_dicom_dir.py # Inference on a full DICOM directory
 ├── cli_args.py              # Centralised CLI argument definitions
-├── args.json                # (optional) global default overrides
 └── requirements.txt
 ```
 
@@ -142,8 +140,8 @@ the chosen k-space column.
 python train_rl.py \
   --train-list data/splits/train.txt \
   --val-list   data/splits/val.txt \
-  --recon      checkpoints/recon_largeunet_ssiml1_sag_6R.pth \
-  --budget     53 \
+  --recon      checkpoints/recon_largeunet_ssiml1_sag_8R.pth \
+  --budget     40 \
   --acs        16 \
   --timesteps  500000
 ```
@@ -153,7 +151,7 @@ python train_rl.py \
 | Argument | Default | Description |
 |----------|---------|-------------|
 | `--recon` | — | Path to the pre-trained reconstructor (frozen during RL) |
-| `--budget` | `37` | Total k-space columns the agent may acquire per episode |
+| `--budget` | `40` | Total k-space columns the agent may acquire per episode |
 | `--acs` | `16` | ACS lines pre-measured before the agent starts |
 | `--timesteps` | `100 000` | Total environment steps for training |
 | `--start-with-acs` | `1` | Pre-fill ACS region at episode start (1 = yes) |
@@ -258,24 +256,6 @@ When `--use-pseudo-ref 1` is set, the SSIM reward is computed against a
 **pseudo-reference** (reconstruction from the wide ACS region only) instead of
 ground truth — enabling inference on real clinical data without a reference scan.
 
----
-
-## Global argument overrides
-
-Any CLI default can be overridden project-wide via `args.json` in the repository root:
-
-```json
-{
-  "train-list": "data/splits/train.txt",
-  "val-list":   "data/splits/val.txt",
-  "recon":      "checkpoints/recon_largeunet_ssiml1_sag_6R.pth",
-  "rl":         "checkpoints/ppo_maskable_sag_6R.zip",
-  "budget":     53,
-  "acs":        16
-}
-```
-
-CLI flags always take precedence over `args.json`.
 
 ---
 
