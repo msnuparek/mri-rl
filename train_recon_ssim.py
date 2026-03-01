@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
-from rl.fastmri_loader import SingleCoilKneeDataset
+from rl.fastmri_loader import DicomSingleCoilDataset
 from rl.utils_fft import ifft2_centered as ifft2, fft2_centered as fft2
 from rl.reconstructor import build_reconstructor
 
@@ -25,7 +25,7 @@ def normalize01_by_ref(x: torch.Tensor, ref: torch.Tensor) -> torch.Tensor:
 # ----------------------------
 # Differentiable SSIM (single-channel, [0,1])
 # ----------------------------
-def _gaussian_kernel(ks: int = 11, sigma: float = 1.5, device="cpu", dtype=torch.float32):
+def _gaussian_kernel(ks: int = 11, sigma: float = 1.5, device="cuda", dtype=torch.float32):
     ax = torch.arange(ks, device=device, dtype=dtype) - (ks - 1) / 2.0
     xx, yy = torch.meshgrid(ax, ax, indexing="ij")
     kernel = torch.exp(-(xx**2 + yy**2) / (2.0 * sigma * sigma))
@@ -113,18 +113,18 @@ def zf_from_masked_k(kspace: torch.Tensor, mask4: torch.Tensor) -> torch.Tensor:
 # ----------------------------
 def train_epoch(model, loader, opt, device, accel: int, acs: int, loss_mode: str, alpha: float):
     model.train()
-    ssim_loss = SSIMLoss().to(device)
+    ssim_loss = SSIMLoss().to(device, non_blocking=True)
 
     total_loss = total_zf_mse = total_pr_mse = 0.0
     total_ssim = 0.0
     n = 0
 
     for batch in loader:
-        k  = batch["kspace"].to(device)   # [B,2,H,W]
-        gt = batch["target"].to(device)   # [B,2,H,W]
+        k  = batch["kspace"].to(device, non_blocking=True)   # [B,2,H,W]
+        gt = batch["target"].to(device, non_blocking=True)   # [B,2,H,W]
         B, _, H, W = k.shape
 
-        mask4 = sample_mask_batch(B, W, accel, acs).to(device)
+        mask4 = sample_mask_batch(B, W, accel, acs).to(device, non_blocking=True)
 
         with torch.no_grad():
             zf = zf_from_masked_k(k, mask4)
@@ -166,18 +166,18 @@ def train_epoch(model, loader, opt, device, accel: int, acs: int, loss_mode: str
 @torch.no_grad()
 def eval_epoch(model, loader, device, accel: int, acs: int, loss_mode: str, alpha: float):
     model.eval()
-    ssim_loss = SSIMLoss().to(device)
+    ssim_loss = SSIMLoss().to(device, non_blocking=True)
 
     total_loss = total_zf_mse = total_pr_mse = 0.0
     total_ssim = 0.0
     n = 0
 
     for batch in loader:
-        k  = batch["kspace"].to(device)
-        gt = batch["target"].to(device)
+        k  = batch["kspace"].to(device, non_blocking=True)
+        gt = batch["target"].to(device, non_blocking=True)
         B, _, H, W = k.shape
 
-        mask4 = sample_mask_batch(B, W, accel, acs).to(device)
+        mask4 = sample_mask_batch(B, W, accel, acs).to(device, non_blocking=True)
         zf   = zf_from_masked_k(k, mask4)
         pred = model(zf)
         pred = apply_dc(pred, k, mask4)
@@ -214,19 +214,20 @@ if __name__ == "__main__":
     from cli_args import parse_train_recon_ssim_args
     args = parse_train_recon_ssim_args()
 
+    torch.multiprocessing.set_start_method("spawn", force=True)
+
     os.makedirs(os.path.dirname(args.save), exist_ok=True)
 
-    train_ds = SingleCoilKneeDataset(args.train_list)
-    val_ds   = SingleCoilKneeDataset(args.val_list)
+    train_ds = DicomSingleCoilDataset(args.train_list)
+    val_ds   = DicomSingleCoilDataset(args.val_list)
 
-    # Poznámka: na Windows je bezpečnější num_workers=0 nebo 2; zde nechám 0 pro robustnost
     train_ld = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True,
-                          num_workers=4, pin_memory=True)
+                          num_workers=8, pin_memory=True, persistent_workers=True)
     val_ld   = DataLoader(val_ds,   batch_size=args.batch_size, shuffle=False,
-                          num_workers=4, pin_memory=True)
+                          num_workers=8, pin_memory=True, persistent_workers=True)
 
     device = torch.device(args.device)
-    model = build_reconstructor("unet_large", base=64, use_se=True, p_drop=0.0).to(device)
+    model = build_reconstructor("unet_large", base=64, use_se=True, p_drop=0.0).to(device, non_blocking=True)
     opt = torch.optim.Adam(model.parameters(), lr=args.lr) 
 
     best_ssim = -1.0
