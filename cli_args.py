@@ -141,29 +141,6 @@ def parse_train_recon_dicom_args() -> argparse.Namespace:
 
 
 
-def parse_recon_test_args() -> argparse.Namespace:
-    ap = argparse.ArgumentParser("Inference a trained reconstructor on a validation slice.")
-    ap.add_argument("--val-list", default="data/splits/val.txt")
-    ap.add_argument("--index", type=int, default=10, help="Global slice index in the validation dataset")
-    ap.add_argument("--recon", default="checkpoints/recon_largeunet_ssiml1_8R.pth", help="Path to reconstructor checkpoint (.pth)")
-    add_common_device(ap)
-    ap.add_argument("--out", default="outputs/recon_vis.png", help="Output figure path")
-    ap.add_argument("--accel", type=int, default=4)
-    ap.add_argument("--acs", type=int, default=16)
-    ap.add_argument("--arch", choices=["unet_large", "cascaded", "small"], default="unet_large")
-    ap.add_argument("--base", type=int, default=64)
-    ap.add_argument("--use-se", type=int, default=1)
-    ap.add_argument("--p-drop", type=float, default=0.0)
-    ap.add_argument("--stages", type=int, default=3, help="for 'cascaded' arch")
-    ap.add_argument("--tie-weights", type=int, default=0, help="for 'cascaded' arch")
-    ap.add_argument("--disp", choices=["gt","joint","per"], default="joint")
-    ap.add_argument("--pctl", type=float, default=99.5)
-    _apply_global_overrides(ap)
-    return ap.parse_args()
-
-
-
-
 def parse_visualize_rl_args() -> argparse.Namespace:
     ap = argparse.ArgumentParser("Visualize RL episode on a validation slice")
     ap.add_argument("--val-list", default='data/splits/val.txt')
@@ -181,22 +158,6 @@ def parse_visualize_rl_args() -> argparse.Namespace:
     ap.add_argument("--out-gif", default="outputs/rl_episode_sag.gif")
     ap.add_argument("--out-grid", default="outputs/rl_episode_grid_sag.png")
     ap.add_argument("--fps", type=int, default=2)
-    _apply_global_overrides(ap)
-    return ap.parse_args()
-
-
-def parse_make_scan_rl_args() -> argparse.Namespace:
-    ap = argparse.ArgumentParser("Reconstruct full DICOM series (all slices of file containing --index)")
-    ap.add_argument("--val-list", default="data/splits/val.txt")
-    ap.add_argument("--index", type=int, default=500, help="slice index in the validation set (to choose file)")
-    ap.add_argument("--rl", default="checkpoints/ppo_maskable_sag_4R.zip", help="MaskablePPO .zip checkpoint")
-    ap.add_argument("--recon", default="checkpoints/recon_largeunet_ssiml1_sag_4R.pth", help="reconstructor checkpoint (.pth)")
-    ap.add_argument("--budget", type=int, default=24)
-    ap.add_argument("--acs", type=int, default=16)
-    ap.add_argument("--start-with-acs", type=int, default=1)
-    add_common_device(ap)
-    ap.add_argument("--out-dir", default="outputs/scan_rl")
-    ap.add_argument("--pctl", type=float, default=99.5, help="display percentile for PNGs")
     _apply_global_overrides(ap)
     return ap.parse_args()
 
@@ -256,3 +217,4 @@ def parse_generate_splits_args() -> argparse.Namespace:
     ap.add_argument("--out-dir", default="data/splits")
     _apply_global_overrides(ap)
     return ap.parse_args()
+
