@@ -30,13 +30,11 @@ reconstructor can recover the highest-quality image within a given acquisition b
 
 ## System visualization
 
-Place a generated GIF at `assets/system_workflow.gif` and it will render directly in the README:
 
 <p align="center">
   <img src="rl_episode.gif" alt="GIF visualization of the RL MRI reconstruction workflow: k-space sampling, mask updates, U-Net reconstruction and SSIM improvement" width="850">
 </p>
 
-> To use another file, replace `assets/system_workflow.gif` with a relative path such as `outputs/rl_episode.gif` or with a public URL.
 
 **Pipeline overview:**
 
